@@ -20,7 +20,7 @@ const sharp = require("sharp")
 
 ffmpeg.setFfmpegPath(ffmpegPath)
 
-const PHONE_NUMBER = process.env.PHONE_NUMBER || "62895386427676"
+const PHONE_NUMBER = process.env.PHONE_NUMBER || "6287886582175"
 const API_KEY = process.env.GROQ_API_KEY || "GANTI_API_KEY"
 
 if(!PHONE_NUMBER || !API_KEY){
@@ -220,7 +220,7 @@ Sudah bisa CN / Belum?
             if(!spam[sender]) spam[sender]=0
             spam[sender]++
             setTimeout(()=> spam[sender]=0,4000)
-            if(spam[sender]>6) return sock.sendMessage(from,{ text:"⚠️ Jangan spam" })
+            if(spam[sender]>6) return sock.sendMessage(from,{ text:"⚠️ Jangan spam 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
 
             /* ================= CEK ADMIN ================= */
             let isAdmin=false
@@ -268,14 +268,14 @@ Sudah bisa CN / Belum?
 if(text === ".close"){
     if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang dapat mengakses fitur ini 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
     await sock.groupSettingUpdate(from,"announcement")
-    return sock.sendMessage(from,{ text:"🔒 Grup telah ditutup (hanya admin yang bisa kirim pesan)" })
+    return sock.sendMessage(from,{ text:"🔒 Grup telah ditutup 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜ (hanya admin yang bisa kirim pesan)" })
 }
 
 /* ================= OPEN GROUP ================= */
 if(text === ".open"){
     if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang dapat mengakses fitur ini 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
     await sock.groupSettingUpdate(from,"not_announcement")
-    return sock.sendMessage(from,{ text:"🔓 Grup telah dibuka (semua member bisa kirim pesan)" })
+    return sock.sendMessage(from,{ text:"🔓 Grup telah dibuka 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜ (semua member bisa kirim pesan)" })
 }
 
             if(text===".setwelcome"){
