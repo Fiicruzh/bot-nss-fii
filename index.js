@@ -20,7 +20,7 @@ const sharp = require("sharp")
 
 ffmpeg.setFfmpegPath(ffmpegPath)
 
-const PHONE_NUMBER = process.env.PHONE_NUMBER || "6287886582175"
+const PHONE_NUMBER = process.env.PHONE_NUMBER || "62895386427676"
 const API_KEY = process.env.GROQ_API_KEY || "GANTI_API_KEY"
 
 if(!PHONE_NUMBER || !API_KEY){
@@ -243,6 +243,8 @@ Sudah bisa CN / Belum?
 ╎- 》.stopundangan
 ╎- 》.antilink
 ╎- 》.kick
+╎- 》.open
+╎- 》.close
 ╎┈「 MEMBER MENU 」
 ╎- 》.rules
 ╚┈┈┈┈┈┈┈┈┈┈┈┈
@@ -262,10 +264,24 @@ Sudah bisa CN / Belum?
             }
 
             /* ================= ADMIN COMMAND ================= */
+            /* ================= CLOSE GROUP ================= */
+if(text === ".close"){
+    if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang dapat mengakses fitur ini 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
+    await sock.groupSettingUpdate(from,"announcement")
+    return sock.sendMessage(from,{ text:"🔒 Grup telah ditutup (hanya admin yang bisa kirim pesan)" })
+}
+
+/* ================= OPEN GROUP ================= */
+if(text === ".open"){
+    if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang dapat mengakses fitur ini 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
+    await sock.groupSettingUpdate(from,"not_announcement")
+    return sock.sendMessage(from,{ text:"🔓 Grup telah dibuka (semua member bisa kirim pesan)" })
+}
+
             if(text===".setwelcome"){
                 if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang bisa pakai command ini" })
                 welcomeGroups.add(from)
-                return sock.sendMessage(from,{ text:"✅ Welcome diaktifkan" })
+                return sock.sendMessage(from,{ text:"✅ Welcome diaktifkan 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
             }
 
             if(text===".rules"){
@@ -316,7 +332,7 @@ LINK VARCITY : https://www.roblox.com/share?code=4e879bb8c0113d429e2b3381537c0e5
                 const pesan = text.replace(".setundangan","").trim()
                 if(!pesan) return sock.sendMessage(from,{ text:"Contoh:\n.setundangan Ayo join clan NIGHTFALL" })
                 undanganGroups[from]={ text:pesan, timer:null }
-                return sock.sendMessage(from,{ text:"✅ Pesan undangan disimpan\nGunakan .interval untuk memulai" })
+                return sock.sendMessage(from,{ text:"✅ Pesan undangan disimpan\nGunakan .interval untuk memulai 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
             }
 
             if(text.startsWith(".interval")){
@@ -337,7 +353,7 @@ LINK VARCITY : https://www.roblox.com/share?code=4e879bb8c0113d429e2b3381537c0e5
                 if(!undanganGroups[from]) return sock.sendMessage(from,{ text:"⚠️ Undangan belum aktif" })
                 clearInterval(undanganGroups[from].timer)
                 delete undanganGroups[from]
-                return sock.sendMessage(from,{ text:"🛑 Undangan otomatis dihentikan" })
+                return sock.sendMessage(from,{ text:"🛑 Undangan otomatis dihentikan 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
             }
 
             /* ================= AI ================= */
@@ -450,7 +466,7 @@ const vid = await axios.get(video,{ responseType:'arraybuffer' })
 
 await sock.sendMessage(from,{
 video:vid.data,
-caption:'✅ TikTok berhasil'
+caption:'✅ TikTok berhasil di download 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜'
 })
 }catch{
 await sock.sendMessage(from,{ text:'❌ Gagal download TikTok' })
