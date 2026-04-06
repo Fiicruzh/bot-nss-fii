@@ -1,22 +1,20 @@
-require("dotenv").config()
-process.on("uncaughtException", console.error)
-process.on("unhandledRejection", console.error)
+import dotenv from "dotenv"
+dotenv.config()
 
-const {
-    default: makeWASocket,
+import makeWASocket, {
     useMultiFileAuthState,
     fetchLatestBaileysVersion,
     DisconnectReason,
     downloadContentFromMessage
-} = require("@whiskeysockets/baileys")
+} from "@whiskeysockets/baileys"
 
-const P = require("pino")
-const axios = require("axios")
-const fs = require("fs-extra")
-const path = require("path")
-const ffmpeg = require("fluent-ffmpeg")
-const ffmpegPath = require("ffmpeg-static")
-const sharp = require("sharp")
+import P from "pino"
+import axios from "axios"
+import fs from "fs-extra"
+import path from "path"
+import ffmpeg from "fluent-ffmpeg"
+import ffmpegPath from "ffmpeg-static"
+import sharp from "sharp"
 
 ffmpeg.setFfmpegPath(ffmpegPath)
 
@@ -493,7 +491,7 @@ if(text.startsWith('.tts ')){
 }
 
 /* ================= BRAT MAX FIT PERFECT ================= */
-const { createCanvas } = require("canvas")
+import { createCanvas } from "canvas"
 
 if(text.startsWith(".brat ")){
     const input = text.replace(".brat ","")
