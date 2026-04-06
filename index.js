@@ -1,21 +1,22 @@
-import dotenv from "dotenv"
-dotenv.config()
+require("dotenv").config()
+process.on("uncaughtException", console.error)
+process.on("unhandledRejection", console.error)
 
-import makeWASocket, {
+const {
+    default: makeWASocket,
     useMultiFileAuthState,
     fetchLatestBaileysVersion,
     DisconnectReason,
     downloadContentFromMessage
-} from "@whiskeysockets/baileys"
+} = require("@whiskeysockets/baileys")
 
-import P from "pino"
-import axios from "axios"
-import fs from "fs-extra"
-import path from "path"
-import ffmpeg from "fluent-ffmpeg"
-import ffmpegPath from "ffmpeg-static"
-import sharp from "sharp"
-import { createCanvas } from "canvas"
+const P = require("pino")
+const axios = require("axios")
+const fs = require("fs-extra")
+const path = require("path")
+const ffmpeg = require("fluent-ffmpeg")
+const ffmpegPath = require("ffmpeg-static")
+const sharp = require("sharp")
 
 ffmpeg.setFfmpegPath(ffmpegPath)
 
@@ -490,110 +491,7 @@ if(text.startsWith('.tts ')){
         if(fs.existsSync(output)) fs.unlinkSync(output)
     }
 }
-
-/* ================= BRAT MAX FIT PERFECT ================= */
-if(text.startsWith(".brat ")){
-    const input = text.replace(".brat ","")
-
-    let parts = input.split("|")
-
-    let topText = parts[0] ? parts[0].trim() : ""
-    let midText = parts[1] ? parts[1].trim() : ""
-    let bottomText = parts[2] ? parts[2].trim() : ""
-
-    function wrapText(ctx, text, maxWidth){
-        const words = text.split(" ")
-        let lines = []
-        let line = ""
-
-        for(let n = 0; n < words.length; n++){
-            const testLine = line + words[n] + " "
-            const width = ctx.measureText(testLine).width
-
-            if(width > maxWidth && n > 0){
-                lines.push(line.trim())
-                line = words[n] + " "
-            } else {
-                line = testLine
-            }
-        }
-
-        lines.push(line.trim())
-        return lines
-    }
-
-    function getMaxFont(ctx, text, boxWidth, boxHeight){
-        let fontSize = 120
-        let lines = []
-
-        while(fontSize > 10){
-            ctx.font = `900 ${fontSize}px Arial Black`
-            lines = wrapText(ctx, text, boxWidth)
-
-            const lineHeight = fontSize * 1.2
-            const totalHeight = lines.length * lineHeight
-
-            // 🔥 cek MUAT horizontal & vertical
-            const tooWide = lines.some(line => ctx.measureText(line).width > boxWidth)
-            const tooTall = totalHeight > boxHeight
-
-            if(!tooWide && !tooTall) break
-
-            fontSize -= 2
-        }
-
-        return { fontSize, lines }
-    }
-
-    function drawBlock(ctx, text, centerY){
-        if(!text) return
-
-        const boxWidth = 460
-        const boxHeight = 150
-
-        const { fontSize, lines } = getMaxFont(ctx, text, boxWidth, boxHeight)
-
-        ctx.font = `900 ${fontSize}px Arial Black`
-        ctx.fillStyle = "black"
-        ctx.textAlign = "center"
-
-        const lineHeight = fontSize * 1.2
-        const totalHeight = lines.length * lineHeight
-
-        let startY = centerY - (totalHeight / 2) + lineHeight
-
-        lines.forEach((line, i)=>{
-            ctx.fillText(line, 256, startY + (i * lineHeight))
-        })
-    }
-
-    try{
-        const canvas = createCanvas(512, 512)
-        const ctx = canvas.getContext("2d")
-
-        // background putih
-        ctx.fillStyle = "white"
-        ctx.fillRect(0, 0, 512, 512)
-
-        // 🔥 FULL AREA TERBAGI 3 BAGIAN
-        drawBlock(ctx, topText, 90)
-        drawBlock(ctx, midText, 256)
-        drawBlock(ctx, bottomText, 420)
-
-        const buffer = canvas.toBuffer("image/png")
-
-        const webp = await sharp(buffer)
-            .webp()
-            .toBuffer()
-
-        return sock.sendMessage(from,{ sticker: webp })
-
-    }catch(err){
-        console.log(err)
-        return sock.sendMessage(from,{ text:"❌ Gagal membuat stiker (canvas error)" })
-    }
-}
-
+            
             /* ================= VIDEO → MP3 ================= */
             if((type==='videoMessage' && msg.message.videoMessage.caption==='.mp3') || text==='.toaudio'){
                 const stream = await downloadContentFromMessage(msg.message.videoMessage,"video")
