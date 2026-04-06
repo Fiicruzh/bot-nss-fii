@@ -254,6 +254,7 @@ Sudah bisa CN / Belum?
 ╎- 》.reset → Reset Memory
 ╚┈┈┈┈┈┈┈┈┈┈┈┈
 ╔┈「 MENU-FII 」
+╎- 》.brat teks
 ╎- 》.stiker (gambar + caption)
 ╎- 》.tts teks
 ╎- 》.mp3 convert mp4 → mp3
@@ -411,28 +412,188 @@ return sock.sendMessage(from,{ text:"❌ Gagal sticker" })
 return sock.sendMessage(from,{ sticker:webp })
 }
 
-            /* ================= TTS ================= */
-            if(text.startsWith('.tts ')){
-const query = text.replace('.tts ','')
-try{
-const url=`https://translate.google.com/translate_tts?ie=UTF-8&tl=id&client=tw-ob&q=${encodeURIComponent(query)}`
-const res=await axios.get(url,{
-responseType:'arraybuffer',
-headers:{'User-Agent':'Mozilla/5.0'}
-})
-await sock.sendMessage(from,{
-audio:res.data,
-mimetype:'audio/mp4',
-ptt:true
-})
-}catch{
-const audio = await textToVoice(query)
-if(audio){
-await sock.sendMessage(from,{ audio, mimetype:"audio/mp4" })
-}else{
-await sock.sendMessage(from,{ text:"❌ TTS gagal" })
+            /* ================= TTS FIX FINAL (WA COMPATIBLE) ================= */
+if(text.startsWith('.tts ')){
+    const query = text.replace('.tts ','').trim()
+    if(!query) return sock.sendMessage(from,{ text:"❌ Masukkan teks" })
+
+    const input = "./tts.mp3"
+    const output = "./tts.ogg"
+
+    try{
+        // 🔥 ambil suara dari API
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=id&client=tw-ob&q=${encodeURIComponent(query)}`
+
+        const res = await axios.get(url,{
+            responseType:'arraybuffer',
+            headers:{
+                'User-Agent':'Mozilla/5.0'
+            }
+        })
+
+        fs.writeFileSync(input, res.data)
+
+        // 🔥 convert ke OGG OPUS (WA format)
+        await new Promise((resolve,reject)=>{
+            ffmpeg(input)
+            .audioCodec("libopus")
+            .format("ogg")
+            .save(output)
+            .on("end",resolve)
+            .on("error",reject)
+        })
+
+        const audio = fs.readFileSync(output)
+
+        await sock.sendMessage(from,{
+            audio: audio,
+            mimetype: 'audio/ogg; codecs=opus',
+            ptt: true
+        })
+
+    }catch(err){
+        console.log("TTS ERROR:", err)
+
+        try{
+            // 🔥 fallback streamelements
+            const audio = await textToVoice(query)
+
+            if(audio){
+                fs.writeFileSync(input, audio)
+
+                await new Promise((resolve,reject)=>{
+                    ffmpeg(input)
+                    .audioCodec("libopus")
+                    .format("ogg")
+                    .save(output)
+                    .on("end",resolve)
+                    .on("error",reject)
+                })
+
+                const fix = fs.readFileSync(output)
+
+                await sock.sendMessage(from,{
+                    audio: fix,
+                    mimetype:'audio/ogg; codecs=opus',
+                    ptt:true
+                })
+            }else{
+                throw "fallback gagal"
+            }
+
+        }catch{
+            return sock.sendMessage(from,{ text:"❌ TTS gagal total" })
+        }
+
+    }finally{
+        if(fs.existsSync(input)) fs.unlinkSync(input)
+        if(fs.existsSync(output)) fs.unlinkSync(output)
+    }
 }
-}
+
+/* ================= BRAT MAX FIT PERFECT ================= */
+const { createCanvas } = require("canvas")
+
+if(text.startsWith(".brat ")){
+    const input = text.replace(".brat ","")
+
+    let parts = input.split("|")
+
+    let topText = parts[0] ? parts[0].trim() : ""
+    let midText = parts[1] ? parts[1].trim() : ""
+    let bottomText = parts[2] ? parts[2].trim() : ""
+
+    function wrapText(ctx, text, maxWidth){
+        const words = text.split(" ")
+        let lines = []
+        let line = ""
+
+        for(let n = 0; n < words.length; n++){
+            const testLine = line + words[n] + " "
+            const width = ctx.measureText(testLine).width
+
+            if(width > maxWidth && n > 0){
+                lines.push(line.trim())
+                line = words[n] + " "
+            } else {
+                line = testLine
+            }
+        }
+
+        lines.push(line.trim())
+        return lines
+    }
+
+    function getMaxFont(ctx, text, boxWidth, boxHeight){
+        let fontSize = 120
+        let lines = []
+
+        while(fontSize > 10){
+            ctx.font = `900 ${fontSize}px Arial Black`
+            lines = wrapText(ctx, text, boxWidth)
+
+            const lineHeight = fontSize * 1.2
+            const totalHeight = lines.length * lineHeight
+
+            // 🔥 cek MUAT horizontal & vertical
+            const tooWide = lines.some(line => ctx.measureText(line).width > boxWidth)
+            const tooTall = totalHeight > boxHeight
+
+            if(!tooWide && !tooTall) break
+
+            fontSize -= 2
+        }
+
+        return { fontSize, lines }
+    }
+
+    function drawBlock(ctx, text, centerY){
+        if(!text) return
+
+        const boxWidth = 460
+        const boxHeight = 150
+
+        const { fontSize, lines } = getMaxFont(ctx, text, boxWidth, boxHeight)
+
+        ctx.font = `900 ${fontSize}px Arial Black`
+        ctx.fillStyle = "black"
+        ctx.textAlign = "center"
+
+        const lineHeight = fontSize * 1.2
+        const totalHeight = lines.length * lineHeight
+
+        let startY = centerY - (totalHeight / 2) + lineHeight
+
+        lines.forEach((line, i)=>{
+            ctx.fillText(line, 256, startY + (i * lineHeight))
+        })
+    }
+
+    try{
+        const canvas = createCanvas(512, 512)
+        const ctx = canvas.getContext("2d")
+
+        // background putih
+        ctx.fillStyle = "white"
+        ctx.fillRect(0, 0, 512, 512)
+
+        // 🔥 FULL AREA TERBAGI 3 BAGIAN
+        drawBlock(ctx, topText, 90)
+        drawBlock(ctx, midText, 256)
+        drawBlock(ctx, bottomText, 420)
+
+        const buffer = canvas.toBuffer("image/png")
+
+        const webp = await sharp(buffer)
+            .webp()
+            .toBuffer()
+
+        return sock.sendMessage(from,{ sticker: webp })
+
+    }catch(err){
+        console.log(err)
+        return sock.sendMessage(from,{ text:"❌ Gagal membuat stiker (canvas error)" })
+    }
 }
 
             /* ================= VIDEO → MP3 ================= */
