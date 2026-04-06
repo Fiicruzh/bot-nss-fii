@@ -247,6 +247,7 @@ Sudah bisa CN / Belum?
 ╔┈「 MENU-FII 」
 ╎- 》.brat teks
 ╎- 》.stiker (gambar + caption)
+╎- 》.mp3 convert mp4 → mp3
 ╎- 》.tts teks
 ╎- 》.tiktok link
 ╚┈┈┈┈┈┈┈┈┈┈┈┈
@@ -545,6 +546,25 @@ if(text.startsWith('.tts ')){
     return sock.sendMessage(from,{ sticker:webp })
 }
 
+            /* ================= VIDEO → MP3 ================= */
+            if((type==='videoMessage' && msg.message.videoMessage.caption==='.mp3') || text==='.toaudio'){
+                const stream = await downloadContentFromMessage(msg.message.videoMessage,"video")
+                const buffer = await bufferFromStream(stream)
+                const input = path.join(__dirname,"input.mp4")
+                const output = path.join(__dirname,"output.mp3")
+                fs.writeFileSync(input, buffer)
+                try{
+                    await videoToAudio(input,output)
+                    const audio = fs.readFileSync(output)
+                    await sock.sendMessage(from,{ audio, mimetype:"audio/mpeg" })
+                }catch{
+                    await sock.sendMessage(from,{ text:"❌ Gagal convert audio" })
+                }finally{
+                    if(fs.existsSync(input)) fs.unlinkSync(input)
+                    if(fs.existsSync(output)) fs.unlinkSync(output)
+                }
+            }
+            
             /* ================= TIKTOK ================= */
             if(text.startsWith('.tiktok ')){
 const url = text.replace('.tiktok ','')
