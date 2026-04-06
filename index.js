@@ -245,9 +245,7 @@ Sudah bisa CN / Belum?
 ╎- 》.reset → Reset Memory
 ╚┈┈┈┈┈┈┈┈┈┈┈┈
 ╔┈「 MENU-FII 」
-╎- 》.brat teks
 ╎- 》.stiker (gambar + caption)
-╎- 》.mp3 convert mp4 → mp3
 ╎- 》.tts teks
 ╎- 》.tiktok link
 ╚┈┈┈┈┈┈┈┈┈┈┈┈
@@ -473,98 +471,6 @@ if(text.startsWith('.tts ')){
     }
 }
 
-/* ================= BRAT FIX ================= */
- if(text.startsWith(".brat ")){
-    const input = text.replace(".brat ","").trim()
-
-    if(!input){
-        return sock.sendMessage(from,{ text:"Contoh:\n.brат atas | tengah | bawah" })
-    }
-
-    let [top="", mid="", bottom=""] = input.split("|").map(v=>v.trim())
-
-    const canvas = createCanvas(512,512)
-    const ctx = canvas.getContext("2d")
-
-    ctx.fillStyle = "#ffffff"
-    ctx.fillRect(0,0,512,512)
-
-    function draw(text, y){
-        if(!text || text.length < 1) return
-
-        let size = 90
-        let lines = []
-
-        while(size > 15){
-            ctx.font = `bold ${size}px Arial`
-            lines = []
-
-            let words = text.split(" ").filter(v=>v) // 🔥 buang kosong
-            let line = ""
-
-            for(let w of words){
-                let test = line + w + " "
-                if(ctx.measureText(test).width > 480){
-                    if(line.trim()) lines.push(line.trim())
-                    line = w + " "
-                } else {
-                    line = test
-                }
-            }
-
-            if(line.trim()) lines.push(line.trim())
-
-            if(lines.length === 0){
-                size -= 5
-                continue
-            }
-
-            const height = lines.length * size * 1.2
-            if(height < 150) break
-
-            size -= 3
-        }
-
-        ctx.font = `bold ${size}px Arial`
-        ctx.fillStyle = "#000"
-        ctx.textAlign = "center"
-
-        let startY = y - ((lines.length - 1) * size * 1.2)/2
-
-        lines.forEach((l,i)=>{
-            ctx.fillText(l,256,startY + (i * size * 1.2))
-        })
-    }
-
-    draw(top, 90)
-    draw(mid, 256)
-    draw(bottom, 420)
-
-    const buffer = canvas.toBuffer("image/png")
-    const webp = await sharp(buffer).webp({quality:100}).toBuffer()
-
-    return sock.sendMessage(from,{ sticker:webp })
-}
-
-            /* ================= VIDEO → MP3 ================= */
-            if((type==='videoMessage' && msg.message.videoMessage.caption==='.mp3') || text==='.toaudio'){
-                const stream = await downloadContentFromMessage(msg.message.videoMessage,"video")
-                const buffer = await bufferFromStream(stream)
-                const input = path.join(__dirname,"input.mp4")
-                const output = path.join(__dirname,"output.mp3")
-                fs.writeFileSync(input, buffer)
-                try{
-                    await videoToAudio(input,output)
-                    const audio = fs.readFileSync(output)
-                    await sock.sendMessage(from,{ audio, mimetype:"audio/mpeg" })
-                }catch{
-                    await sock.sendMessage(from,{ text:"❌ Gagal convert audio" })
-                }finally{
-                    if(fs.existsSync(input)) fs.unlinkSync(input)
-                    if(fs.existsSync(output)) fs.unlinkSync(output)
-                }
-            }
-            
             /* ================= TIKTOK ================= */
             if(text.startsWith('.tiktok ')){
 const url = text.replace('.tiktok ','')
