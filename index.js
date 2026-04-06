@@ -485,113 +485,142 @@ if(text.startsWith('.tts ')){
 }
 
 /* ================= BRAT FIX ================= */
-            if(text.startsWith(".brat ")){
-                const input = text.replace(".brat ","").trim()
+ if(text.startsWith(".brat ")){
+    const input = text.replace(".brat ","").trim()
 
-                if(!input){
-                    return sock.sendMessage(from,{ text:"Contoh:\n.brат atas | tengah | bawah" })
+    if(!input){
+        return sock.sendMessage(from,{ text:"Contoh:\n.brат atas | tengah | bawah" })
+    }
+
+    let [top="", mid="", bottom=""] = input.split("|").map(v=>v.trim())
+
+    const canvas = createCanvas(512,512)
+    const ctx = canvas.getContext("2d")
+
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(0,0,512,512)
+
+    function draw(text, y){
+        if(!text || text.length < 1) return
+
+        let size = 90
+        let lines = []
+
+        while(size > 15){
+            ctx.font = `bold ${size}px Arial`
+            lines = []
+
+            let words = text.split(" ").filter(v=>v) // 🔥 buang kosong
+            let line = ""
+
+            for(let w of words){
+                let test = line + w + " "
+                if(ctx.measureText(test).width > 480){
+                    if(line.trim()) lines.push(line.trim())
+                    line = w + " "
+                } else {
+                    line = test
                 }
-
-                let [top="", mid="", bottom=""] = input.split("|").map(v=>v.trim())
-
-                const canvas = createCanvas(512,512)
-                const ctx = canvas.getContext("2d")
-
-                ctx.fillStyle = "#fff"
-                ctx.fillRect(0,0,512,512)
-
-                function draw(text, y){
-                    if(!text) return
-
-                    let size = 100
-                    let lines = []
-
-                    while(size > 15){
-                        ctx.font = `bold ${size}px Arial`
-                        lines = []
-                        let words = text.split(" ")
-                        let line = ""
-
-                        for(let w of words){
-                            let test = line + w + " "
-                            if(ctx.measureText(test).width > 480){
-                                lines.push(line)
-                                line = w + " "
-                            } else {
-                                line = test
-                            }
-                        }
-                        lines.push(line)
-
-                        const height = lines.length * size * 1.2
-                        if(height < 150) break
-                        size -= 3
-                    }
-
-                    ctx.font = `bold ${size}px Arial`
-                    ctx.fillStyle = "#000"
-                    ctx.textAlign = "center"
-
-                    let startY = y - (lines.length * size * 1.2)/2
-
-                    lines.forEach((l,i)=>{
-                        ctx.fillText(l.trim(),256,startY + (i * size * 1.2))
-                    })
-                }
-
-                draw(top, 90)
-                draw(mid, 256)
-                draw(bottom, 420)
-
-                const buffer = canvas.toBuffer("image/png")
-                const webp = await sharp(buffer).webp().toBuffer()
-
-                return sock.sendMessage(from,{ sticker:webp })
             }
+
+            if(line.trim()) lines.push(line.trim())
+
+            if(lines.length === 0){
+                size -= 5
+                continue
+            }
+
+            const height = lines.length * size * 1.2
+            if(height < 150) break
+
+            size -= 3
+        }
+
+        ctx.font = `bold ${size}px Arial`
+        ctx.fillStyle = "#000"
+        ctx.textAlign = "center"
+
+        let startY = y - ((lines.length - 1) * size * 1.2)/2
+
+        lines.forEach((l,i)=>{
+            ctx.fillText(l,256,startY + (i * size * 1.2))
+        })
+    }
+
+    draw(top, 90)
+    draw(mid, 256)
+    draw(bottom, 420)
+
+    const buffer = canvas.toBuffer("image/png")
+    const webp = await sharp(buffer).webp({quality:100}).toBuffer()
+
+    return sock.sendMessage(from,{ sticker:webp })
+}
 
 /* ================= MP3 FIX ================= */
-            if(
-                (type === 'videoMessage' && msg.message.videoMessage.caption === '.mp3') ||
-                text === '.toaudio'
-            ){
-                try{
-                    let videoMsg
+ if(
+    (type === 'videoMessage' && msg.message.videoMessage.caption === '.mp3') ||
+    text === '.toaudio'
+){
+    try{
+        let videoMsg
 
-                    if(type === 'videoMessage'){
-                        videoMsg = msg.message.videoMessage
-                    } else if(msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage){
-                        videoMsg = msg.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage
-                    }
+        if(type === 'videoMessage'){
+            videoMsg = msg.message.videoMessage
+        } 
+        else if(msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage){
+            videoMsg = msg.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage
+        }
 
-                    if(!videoMsg){
-                        return sock.sendMessage(from,{ text:"❌ Kirim / reply video dengan caption .mp3" })
-                    }
+        if(!videoMsg){
+            return sock.sendMessage(from,{ text:"❌ Kirim atau reply video dengan caption .mp3" })
+        }
 
-                    const stream = await downloadContentFromMessage(videoMsg,"video")
-                    const buffer = await bufferFromStream(stream)
+        const stream = await downloadContentFromMessage(videoMsg,"video")
+        const buffer = await bufferFromStream(stream)
 
-                    const input = path.join(__dirname, `in_${Date.now()}.mp4`)
-                    const output = path.join(__dirname, `out_${Date.now()}.mp3`)
+        if(!buffer || buffer.length < 1000){
+            return sock.sendMessage(from,{ text:"❌ Video gagal dibaca" })
+        }
 
-                    fs.writeFileSync(input, buffer)
+        const input = path.join(__dirname, `input_${Date.now()}.mp4`)
+        const output = path.join(__dirname, `output_${Date.now()}.mp3`)
 
-                    await videoToAudio(input, output)
+        fs.writeFileSync(input, buffer)
 
-                    const audio = fs.readFileSync(output)
+        await new Promise((resolve,reject)=>{
+            ffmpeg(input)
+            .noVideo()
+            .audioCodec("libmp3lame")
+            .audioBitrate(96) // 🔥 lebih ringan
+            .format("mp3")
+            .on("end", resolve)
+            .on("error", reject)
+            .save(output)
+        })
 
-                    await sock.sendMessage(from,{
-                        audio,
-                        mimetype:"audio/mpeg"
-                    })
+        if(!fs.existsSync(output)){
+            throw "FFMPEG gagal output"
+        }
 
-                    fs.unlinkSync(input)
-                    fs.unlinkSync(output)
+        const audio = fs.readFileSync(output)
 
-                }catch(err){
-                    console.log("MP3 ERROR:", err)
-                    sock.sendMessage(from,{ text:"❌ Gagal convert MP3" })
-                }
-            }
+        await sock.sendMessage(from,{
+            audio,
+            mimetype:"audio/mpeg"
+        })
+
+        fs.unlinkSync(input)
+        fs.unlinkSync(output)
+
+    }catch(err){
+        console.log("MP3 ERROR:", err)
+
+        return sock.sendMessage(from,{
+            text:"❌ Gagal convert MP3\nKemungkinan:\n- ffmpeg tidak support server\n- video rusak"
+        })
+    }
+}
             /* ================= TIKTOK ================= */
             if(text.startsWith('.tiktok ')){
 const url = text.replace('.tiktok ','')
