@@ -20,7 +20,7 @@ const sharp = require("sharp")
 
 ffmpeg.setFfmpegPath(ffmpegPath)
 
-const PHONE_NUMBER = process.env.PHONE_NUMBER || "6287886582175"
+const PHONE_NUMBER = process.env.PHONE_NUMBER || "628979700981"
 const API_KEY = process.env.GROQ_API_KEY || "GANTI_API_KEY"
 
 if(!PHONE_NUMBER || !API_KEY){
@@ -220,7 +220,7 @@ Sudah bisa CN / Belum?
             if(!spam[sender]) spam[sender]=0
             spam[sender]++
             setTimeout(()=> spam[sender]=0,4000)
-            if(spam[sender]>6) return sock.sendMessage(from,{ text:"⚠️ Jangan spam 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
+            if(spam[sender]>6) return sock.sendMessage(from,{ text:"⚠️ Jangan spam" })
 
             /* ================= CEK ADMIN ================= */
             let isAdmin=false
@@ -269,14 +269,14 @@ Sudah bisa CN / Belum?
 if(text === ".close"){
     if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang dapat mengakses fitur ini 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
     await sock.groupSettingUpdate(from,"announcement")
-    return sock.sendMessage(from,{ text:"🔒 Grup telah ditutup 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜ (hanya admin yang bisa kirim pesan)" })
+    return sock.sendMessage(from,{ text:"🔒 Grup telah ditutup (hanya admin yang bisa kirim pesan)" })
 }
 
 /* ================= OPEN GROUP ================= */
 if(text === ".open"){
     if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang dapat mengakses fitur ini 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
     await sock.groupSettingUpdate(from,"not_announcement")
-    return sock.sendMessage(from,{ text:"🔓 Grup telah dibuka 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜ (semua member bisa kirim pesan)" })
+    return sock.sendMessage(from,{ text:"🔓 Grup telah dibuka (semua member bisa kirim pesan)" })
 }
 
             if(text===".setwelcome"){
@@ -370,49 +370,50 @@ LINK VARCITY : https://www.roblox.com/share?code=4e879bb8c0113d429e2b3381537c0e5
                 return sock.sendMessage(from,{ text:reply })
             }
 
-            /* ================= STICKER ================= */
-            if(type === 'imageMessage' && msg.message.imageMessage.caption === '.stiker'){
-const buffer = await getBuffer(msg.message.imageMessage,'image')
+            /* ================= STICKER (FIX NO GEPENG + AUTO CROP) ================= */
+if(type === 'imageMessage' && msg.message.imageMessage.caption === '.stiker'){
+    const buffer = await getBuffer(msg.message.imageMessage,'image')
 
-const input='./stiker.jpg'
-const output='./stiker.webp'
+    try{
+        const webp = await sharp(buffer)
+            .resize(512,512,{
+                fit:"cover", // 🔥 crop otomatis
+                position:"centre"
+            })
+            .webp()
+            .toBuffer()
 
-fs.writeFileSync(input, buffer)
+        return sock.sendMessage(from,{ sticker: webp })
 
-await new Promise((resolve,reject)=>{
-ffmpeg(input)
-.outputOptions([
-'-vcodec libwebp',
-'-vf scale=512:512:force_original_aspect_ratio=decrease,fps=15'
-])
-.toFormat('webp')
-.on('end',resolve)
-.on('error',reject)
-.save(output)
-})
-
-const sticker = fs.readFileSync(output)
-await sock.sendMessage(from,{ sticker })
-
-fs.unlinkSync(input)
-fs.unlinkSync(output)
+    }catch(err){
+        console.log(err)
+        return sock.sendMessage(from,{ text:"❌ Gagal membuat stiker" })
+    }
 }
 
-// versi sharp (script new)
+
+// versi sharp (tetap ada tapi sudah di upgrade)
 if(msg.message.imageMessage && text === ".stiker"){
-const stream = await downloadContentFromMessage(msg.message.imageMessage,"image")
-const buffer = await bufferFromStream(stream)
+    const stream = await downloadContentFromMessage(msg.message.imageMessage,"image")
+    const buffer = await bufferFromStream(stream)
 
-const webp = await toWebp(buffer)
+    try{
+        const webp = await sharp(buffer)
+            .resize(512,512,{
+                fit:"cover",
+                position:"centre"
+            })
+            .webp()
+            .toBuffer()
 
-if(!webp){
-return sock.sendMessage(from,{ text:"❌ Gagal sticker" })
+        return sock.sendMessage(from,{ sticker:webp })
+
+    }catch{
+        return sock.sendMessage(from,{ text:"❌ Gagal sticker" })
+    }
 }
 
-return sock.sendMessage(from,{ sticker:webp })
-}
-
-            /* ================= TTS FIX FINAL (WA COMPATIBLE) ================= */
+           /* ================= TTS FIX FINAL (WA COMPATIBLE) ================= */
 if(text.startsWith('.tts ')){
     const query = text.replace('.tts ','').trim()
     if(!query) return sock.sendMessage(from,{ text:"❌ Masukkan teks" })
