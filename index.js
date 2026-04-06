@@ -484,170 +484,114 @@ if(text.startsWith('.tts ')){
     }
 }
 
-/* ================= BRAT MAX FIT PERFECT (FIX RAILWAY + STABIL) ================= */
-if(text.startsWith(".brat ")){
-    const input = text.replace(".brat ","").trim()
+/* ================= BRAT FIX ================= */
+            if(text.startsWith(".brat ")){
+                const input = text.replace(".brat ","").trim()
 
-    if(!input){
-        return sock.sendMessage(from,{ text:"❌ Contoh:\n.brат Halo | Tengah | Bawah" })
-    }
+                if(!input){
+                    return sock.sendMessage(from,{ text:"Contoh:\n.brат atas | tengah | bawah" })
+                }
 
-    let parts = input.split("|")
+                let [top="", mid="", bottom=""] = input.split("|").map(v=>v.trim())
 
-    let topText = parts[0] ? parts[0].trim() : ""
-    let midText = parts[1] ? parts[1].trim() : ""
-    let bottomText = parts[2] ? parts[2].trim() : ""
+                const canvas = createCanvas(512,512)
+                const ctx = canvas.getContext("2d")
 
-    function wrapText(ctx, text, maxWidth){
-        const words = text.split(" ")
-        let lines = []
-        let line = ""
+                ctx.fillStyle = "#fff"
+                ctx.fillRect(0,0,512,512)
 
-        for(let i = 0; i < words.length; i++){
-            const testLine = line + words[i] + " "
-            const width = ctx.measureText(testLine).width
+                function draw(text, y){
+                    if(!text) return
 
-            if(width > maxWidth && i > 0){
-                lines.push(line.trim())
-                line = words[i] + " "
-            } else {
-                line = testLine
+                    let size = 100
+                    let lines = []
+
+                    while(size > 15){
+                        ctx.font = `bold ${size}px Arial`
+                        lines = []
+                        let words = text.split(" ")
+                        let line = ""
+
+                        for(let w of words){
+                            let test = line + w + " "
+                            if(ctx.measureText(test).width > 480){
+                                lines.push(line)
+                                line = w + " "
+                            } else {
+                                line = test
+                            }
+                        }
+                        lines.push(line)
+
+                        const height = lines.length * size * 1.2
+                        if(height < 150) break
+                        size -= 3
+                    }
+
+                    ctx.font = `bold ${size}px Arial`
+                    ctx.fillStyle = "#000"
+                    ctx.textAlign = "center"
+
+                    let startY = y - (lines.length * size * 1.2)/2
+
+                    lines.forEach((l,i)=>{
+                        ctx.fillText(l.trim(),256,startY + (i * size * 1.2))
+                    })
+                }
+
+                draw(top, 90)
+                draw(mid, 256)
+                draw(bottom, 420)
+
+                const buffer = canvas.toBuffer("image/png")
+                const webp = await sharp(buffer).webp().toBuffer()
+
+                return sock.sendMessage(from,{ sticker:webp })
             }
-        }
 
-        lines.push(line.trim())
-        return lines
-    }
+/* ================= MP3 FIX ================= */
+            if(
+                (type === 'videoMessage' && msg.message.videoMessage.caption === '.mp3') ||
+                text === '.toaudio'
+            ){
+                try{
+                    let videoMsg
 
-    function getMaxFont(ctx, text, boxWidth, boxHeight){
-        let fontSize = 120
-        let lines = []
+                    if(type === 'videoMessage'){
+                        videoMsg = msg.message.videoMessage
+                    } else if(msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage){
+                        videoMsg = msg.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage
+                    }
 
-        while(fontSize > 12){
-            ctx.font = `bold ${fontSize}px Arial`
-            lines = wrapText(ctx, text, boxWidth)
+                    if(!videoMsg){
+                        return sock.sendMessage(from,{ text:"❌ Kirim / reply video dengan caption .mp3" })
+                    }
 
-            const lineHeight = fontSize * 1.2
-            const totalHeight = lines.length * lineHeight
+                    const stream = await downloadContentFromMessage(videoMsg,"video")
+                    const buffer = await bufferFromStream(stream)
 
-            const tooWide = lines.some(line => ctx.measureText(line).width > boxWidth)
-            const tooTall = totalHeight > boxHeight
+                    const input = path.join(__dirname, `in_${Date.now()}.mp4`)
+                    const output = path.join(__dirname, `out_${Date.now()}.mp3`)
 
-            if(!tooWide && !tooTall) break
+                    fs.writeFileSync(input, buffer)
 
-            fontSize -= 2
-        }
+                    await videoToAudio(input, output)
 
-        return { fontSize, lines }
-    }
+                    const audio = fs.readFileSync(output)
 
-    function drawBlock(ctx, text, centerY){
-        if(!text) return
+                    await sock.sendMessage(from,{
+                        audio,
+                        mimetype:"audio/mpeg"
+                    })
 
-        const boxWidth = 480
-        const boxHeight = 150
+                    fs.unlinkSync(input)
+                    fs.unlinkSync(output)
 
-        const { fontSize, lines } = getMaxFont(ctx, text, boxWidth, boxHeight)
-
-        ctx.font = `bold ${fontSize}px Arial`
-        ctx.fillStyle = "black"
-        ctx.textAlign = "center"
-        ctx.textBaseline = "middle"
-
-        const lineHeight = fontSize * 1.2
-        const totalHeight = lines.length * lineHeight
-
-        let startY = centerY - (totalHeight / 2) + (lineHeight / 2)
-
-        lines.forEach((line, i)=>{
-            ctx.fillText(line, 256, startY + (i * lineHeight))
-        })
-    }
-
-    try{
-        const canvas = createCanvas(512,512)
-        const ctx = canvas.getContext("2d")
-
-        // background putih
-        ctx.fillStyle = "#ffffff"
-        ctx.fillRect(0,0,512,512)
-
-        // 🔥 posisi lebih balance
-        drawBlock(ctx, topText, 90)
-        drawBlock(ctx, midText, 256)
-        drawBlock(ctx, bottomText, 420)
-
-        const buffer = canvas.toBuffer("image/png")
-
-        const webp = await sharp(buffer)
-            .webp({ quality: 100 })
-            .toBuffer()
-
-        return sock.sendMessage(from,{ sticker: webp })
-
-    }catch(err){
-        console.log("BRAT ERROR:", err)
-        return sock.sendMessage(from,{ text:"❌ Gagal membuat brat sticker" })
-    }
-}
-
-/* ================= VIDEO → MP3 (FIX STABIL + ANTI ERROR) ================= */
-if(
-    (type === 'videoMessage' && msg.message.videoMessage.caption === '.mp3') ||
-    text === '.toaudio'
-){
-    try{
-        let videoMsg
-
-        // 🔥 kalau kirim langsung
-        if(type === 'videoMessage'){
-            videoMsg = msg.message.videoMessage
-        }
-        // 🔥 kalau reply video
-        else if(msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage){
-            videoMsg = msg.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage
-        }
-
-        if(!videoMsg){
-            return sock.sendMessage(from,{ text:"❌ Kirim / reply video dengan caption *.mp3*" })
-        }
-
-        const stream = await downloadContentFromMessage(videoMsg,"video")
-        const buffer = await bufferFromStream(stream)
-
-        const input = path.join(__dirname, `input_${Date.now()}.mp4`)
-        const output = path.join(__dirname, `output_${Date.now()}.mp3`)
-
-        fs.writeFileSync(input, buffer)
-
-        // 🔥 convert lebih stabil
-        await new Promise((resolve,reject)=>{
-            ffmpeg(input)
-            .noVideo()
-            .audioCodec("libmp3lame")
-            .audioBitrate(128)
-            .format("mp3")
-            .save(output)
-            .on("end", resolve)
-            .on("error", reject)
-        })
-
-        const audio = fs.readFileSync(output)
-
-        await sock.sendMessage(from,{
-            audio: audio,
-            mimetype: "audio/mpeg"
-        })
-
-        // 🔥 hapus file
-        if(fs.existsSync(input)) fs.unlinkSync(input)
-        if(fs.existsSync(output)) fs.unlinkSync(output)
-
-    }catch(err){
-        console.log("MP3 ERROR:", err)
-        return sock.sendMessage(from,{ text:"❌ Gagal convert ke MP3" })
-    }
-}
+                }catch(err){
+                    console.log("MP3 ERROR:", err)
+                    sock.sendMessage(from,{ text:"❌ Gagal convert MP3" })
+                }
+            }
             /* ================= TIKTOK ================= */
             if(text.startsWith('.tiktok ')){
 const url = text.replace('.tiktok ','')
