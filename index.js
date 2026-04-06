@@ -484,9 +484,15 @@ if(text.startsWith('.tts ')){
     }
 }
 
-/* ================= BRAT MAX FIT PERFECT ================= */
+/* ================= BRAT MAX FIT PERFECT (FIX RAILWAY + STABIL) ================= */
+const { createCanvas } = require("canvas")
+
 if(text.startsWith(".brat ")){
-    const input = text.replace(".brat ","")
+    const input = text.replace(".brat ","").trim()
+
+    if(!input){
+        return sock.sendMessage(from,{ text:"❌ Contoh:\n.brат Halo | Tengah | Bawah" })
+    }
 
     let parts = input.split("|")
 
@@ -499,13 +505,13 @@ if(text.startsWith(".brat ")){
         let lines = []
         let line = ""
 
-        for(let n = 0; n < words.length; n++){
-            const testLine = line + words[n] + " "
+        for(let i = 0; i < words.length; i++){
+            const testLine = line + words[i] + " "
             const width = ctx.measureText(testLine).width
 
-            if(width > maxWidth && n > 0){
+            if(width > maxWidth && i > 0){
                 lines.push(line.trim())
-                line = words[n] + " "
+                line = words[i] + " "
             } else {
                 line = testLine
             }
@@ -519,14 +525,13 @@ if(text.startsWith(".brat ")){
         let fontSize = 120
         let lines = []
 
-        while(fontSize > 10){
-            ctx.font = `900 ${fontSize}px Arial Black`
+        while(fontSize > 12){
+            ctx.font = `bold ${fontSize}px Arial`
             lines = wrapText(ctx, text, boxWidth)
 
             const lineHeight = fontSize * 1.2
             const totalHeight = lines.length * lineHeight
 
-            // 🔥 cek MUAT horizontal & vertical
             const tooWide = lines.some(line => ctx.measureText(line).width > boxWidth)
             const tooTall = totalHeight > boxHeight
 
@@ -541,19 +546,20 @@ if(text.startsWith(".brat ")){
     function drawBlock(ctx, text, centerY){
         if(!text) return
 
-        const boxWidth = 460
+        const boxWidth = 480
         const boxHeight = 150
 
         const { fontSize, lines } = getMaxFont(ctx, text, boxWidth, boxHeight)
 
-        ctx.font = `900 ${fontSize}px Arial Black`
+        ctx.font = `bold ${fontSize}px Arial`
         ctx.fillStyle = "black"
         ctx.textAlign = "center"
+        ctx.textBaseline = "middle"
 
         const lineHeight = fontSize * 1.2
         const totalHeight = lines.length * lineHeight
 
-        let startY = centerY - (totalHeight / 2) + lineHeight
+        let startY = centerY - (totalHeight / 2) + (lineHeight / 2)
 
         lines.forEach((line, i)=>{
             ctx.fillText(line, 256, startY + (i * lineHeight))
@@ -561,14 +567,14 @@ if(text.startsWith(".brat ")){
     }
 
     try{
-        const canvas = createCanvas(512, 512)
+        const canvas = createCanvas(512,512)
         const ctx = canvas.getContext("2d")
 
         // background putih
-        ctx.fillStyle = "white"
-        ctx.fillRect(0, 0, 512, 512)
+        ctx.fillStyle = "#ffffff"
+        ctx.fillRect(0,0,512,512)
 
-        // 🔥 FULL AREA TERBAGI 3 BAGIAN
+        // 🔥 posisi lebih balance
         drawBlock(ctx, topText, 90)
         drawBlock(ctx, midText, 256)
         drawBlock(ctx, bottomText, 420)
@@ -576,14 +582,14 @@ if(text.startsWith(".brat ")){
         const buffer = canvas.toBuffer("image/png")
 
         const webp = await sharp(buffer)
-            .webp()
+            .webp({ quality: 100 })
             .toBuffer()
 
         return sock.sendMessage(from,{ sticker: webp })
 
     }catch(err){
-        console.log(err)
-        return sock.sendMessage(from,{ text:"❌ Gagal membuat stiker (canvas error)" })
+        console.log("BRAT ERROR:", err)
+        return sock.sendMessage(from,{ text:"❌ Gagal membuat brat sticker" })
     }
 }
 
