@@ -485,8 +485,6 @@ if(text.startsWith('.tts ')){
 }
 
 /* ================= BRAT MAX FIT PERFECT ================= */
-const { createCanvas } = require("canvas")
-
 if(text.startsWith(".brat ")){
     const input = text.replace(".brat ","")
 
