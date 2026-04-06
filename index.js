@@ -1,32 +1,24 @@
-require("dotenv").config()
-process.on("uncaughtException", console.error)
-process.on("unhandledRejection", console.error)
+import "dotenv/config"
+import P from "pino"
+import axios from "axios"
+import fs from "fs-extra"
+import path from "path"
+import ffmpeg from "fluent-ffmpeg"
+import ffmpegPath from "ffmpeg-static"
+import sharp from "sharp"
+import { createCanvas } from "canvas"
 
-const {
-    default: makeWASocket,
+import makeWASocket, {
     useMultiFileAuthState,
     fetchLatestBaileysVersion,
     DisconnectReason,
     downloadContentFromMessage
-} = require("@whiskeysockets/baileys")
-
-const P = require("pino")
-const axios = require("axios")
-const fs = require("fs-extra")
-const path = require("path")
-const ffmpeg = require("fluent-ffmpeg")
-const ffmpegPath = require("ffmpeg-static")
-const sharp = require("sharp")
+} from "@whiskeysockets/baileys"
 
 ffmpeg.setFfmpegPath(ffmpegPath)
 
-const PHONE_NUMBER = process.env.PHONE_NUMBER || "6287886582175"
-const API_KEY = process.env.GROQ_API_KEY || "GANTI_API_KEY"
-
-if(!PHONE_NUMBER || !API_KEY){
-    console.log("❌ ENV belum lengkap")
-    process.exit()
-}
+const PHONE_NUMBER = process.env.PHONE_NUMBER
+const API_KEY = process.env.GROQ_API_KEY
 
 /* ================= DATABASE ================= */
 let welcomeGroups = new Set()
