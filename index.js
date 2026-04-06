@@ -233,7 +233,6 @@ Sudah bisa CN / Belum?
 ╎- 》.setwelcome
 ╎- 》.setundangan
 ╎- 》.stopundangan
-╎- 》.antilink
 ╎- 》.kick
 ╎- 》.open
 ╎- 》.close
@@ -249,7 +248,6 @@ Sudah bisa CN / Belum?
 ╎- 》.brat teks
 ╎- 》.stiker (gambar + caption)
 ╎- 》.tts teks
-╎- 》.mp3 convert mp4 → mp3
 ╎- 》.tiktok link
 ╚┈┈┈┈┈┈┈┈┈┈┈┈
                     `
@@ -299,16 +297,6 @@ LINK VARCITY : https://www.roblox.com/share?code=4e879bb8c0113d429e2b3381537c0e5
                 })
             }
 
-            if(text===".antilink"){
-                if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang bisa pakai command ini" })
-                antilinkGroups.add(from)
-                return sock.sendMessage(from,{ text:"🚫 Anti link aktif" })
-            }
-
-            if(antilinkGroups.has(from) && text.includes("https://chat.whatsapp.com")){
-                return sock.sendMessage(from,{ text:"🚫 Link grup dilarang!" })
-            }
-
             if(text.startsWith(".kick")){
                 if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang bisa pakai command ini" })
                 if(!msg.message.extendedTextMessage) return
@@ -353,7 +341,7 @@ LINK VARCITY : https://www.roblox.com/share?code=4e879bb8c0113d429e2b3381537c0e5
             if(!memory[sender]) memory[sender] = [{ role:"system", content:"Kamu adalah AI WhatsApp santai dan membantu." }]
             if(text===".chat"){ aiMode[sender]=true; return sock.sendMessage(from,{ text:"🤖 AI aktif" }) }
             if(text===".off"){ aiMode[sender]=false; memory[sender]=[]; return sock.sendMessage(from,{ text:"❌ AI mati" }) }
-            if(text===".reset"){ memory[sender]=[]; return sock.sendMessage(from,{ text:"🧠 Memory direset" }) }
+            if(text===".reset"){ memory[sender]=[]; return sock.sendMessage(from,{ text:"🧠 Memory direset 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" }) }
             if(aiMode[sender] && text){
                 memory[sender].push({ role:"user", content:text })
                 if(memory[sender].length>20) memory[sender].splice(1,1)
@@ -379,7 +367,7 @@ if(type === 'imageMessage' && msg.message.imageMessage.caption === '.stiker'){
 
     }catch(err){
         console.log(err)
-        return sock.sendMessage(from,{ text:"❌ Gagal membuat stiker" })
+        return sock.sendMessage(from,{ text:"❌ Gagal membuat stiker 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
     }
 }
 
@@ -401,14 +389,14 @@ if(msg.message.imageMessage && text === ".stiker"){
         return sock.sendMessage(from,{ sticker:webp })
 
     }catch{
-        return sock.sendMessage(from,{ text:"❌ Gagal sticker" })
+        return sock.sendMessage(from,{ text:"❌ Gagal sticker 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
     }
 }
 
            /* ================= TTS FIX FINAL (WA COMPATIBLE) ================= */
 if(text.startsWith('.tts ')){
     const query = text.replace('.tts ','').trim()
-    if(!query) return sock.sendMessage(from,{ text:"❌ Masukkan teks" })
+    if(!query) return sock.sendMessage(from,{ text:"❌ Masukkan teks 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
 
     const input = "./tts.mp3"
     const output = "./tts.ogg"
@@ -475,7 +463,7 @@ if(text.startsWith('.tts ')){
             }
 
         }catch{
-            return sock.sendMessage(from,{ text:"❌ TTS gagal total" })
+            return sock.sendMessage(from,{ text:"❌ TTS gagal total 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
         }
 
     }finally{
@@ -557,70 +545,6 @@ if(text.startsWith('.tts ')){
     return sock.sendMessage(from,{ sticker:webp })
 }
 
-/* ================= MP3 FIX ================= */
- if(
-    (type === 'videoMessage' && msg.message.videoMessage.caption === '.mp3') ||
-    text === '.toaudio'
-){
-    try{
-        let videoMsg
-
-        if(type === 'videoMessage'){
-            videoMsg = msg.message.videoMessage
-        } 
-        else if(msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage){
-            videoMsg = msg.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage
-        }
-
-        if(!videoMsg){
-            return sock.sendMessage(from,{ text:"❌ Kirim atau reply video dengan caption .mp3" })
-        }
-
-        const stream = await downloadContentFromMessage(videoMsg,"video")
-        const buffer = await bufferFromStream(stream)
-
-        if(!buffer || buffer.length < 1000){
-            return sock.sendMessage(from,{ text:"❌ Video gagal dibaca" })
-        }
-
-        const input = path.join(__dirname, `input_${Date.now()}.mp4`)
-        const output = path.join(__dirname, `output_${Date.now()}.mp3`)
-
-        fs.writeFileSync(input, buffer)
-
-        await new Promise((resolve,reject)=>{
-            ffmpeg(input)
-            .noVideo()
-            .audioCodec("libmp3lame")
-            .audioBitrate(96) // 🔥 lebih ringan
-            .format("mp3")
-            .on("end", resolve)
-            .on("error", reject)
-            .save(output)
-        })
-
-        if(!fs.existsSync(output)){
-            throw "FFMPEG gagal output"
-        }
-
-        const audio = fs.readFileSync(output)
-
-        await sock.sendMessage(from,{
-            audio,
-            mimetype:"audio/mpeg"
-        })
-
-        fs.unlinkSync(input)
-        fs.unlinkSync(output)
-
-    }catch(err){
-        console.log("MP3 ERROR:", err)
-
-        return sock.sendMessage(from,{
-            text:"❌ Gagal convert MP3\nKemungkinan:\n- ffmpeg tidak support server\n- video rusak"
-        })
-    }
-}
             /* ================= TIKTOK ================= */
             if(text.startsWith('.tiktok ')){
 const url = text.replace('.tiktok ','')
