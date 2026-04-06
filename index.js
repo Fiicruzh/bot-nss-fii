@@ -254,7 +254,6 @@ Sudah bisa CN / Belum?
             }
 
             /* ================= ADMIN COMMAND ================= */
-            /* ================= CLOSE GROUP ================= */
 if(text === ".close"){
     if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang dapat mengakses fitur ini 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
     await sock.groupSettingUpdate(from,"announcement")
