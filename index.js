@@ -593,25 +593,63 @@ if(text.startsWith(".brat ")){
     }
 }
 
-            /* ================= VIDEO → MP3 ================= */
-            if((type==='videoMessage' && msg.message.videoMessage.caption==='.mp3') || text==='.toaudio'){
-                const stream = await downloadContentFromMessage(msg.message.videoMessage,"video")
-                const buffer = await bufferFromStream(stream)
-                const input = path.join(__dirname,"input.mp4")
-                const output = path.join(__dirname,"output.mp3")
-                fs.writeFileSync(input, buffer)
-                try{
-                    await videoToAudio(input,output)
-                    const audio = fs.readFileSync(output)
-                    await sock.sendMessage(from,{ audio, mimetype:"audio/mpeg" })
-                }catch{
-                    await sock.sendMessage(from,{ text:"❌ Gagal convert audio" })
-                }finally{
-                    if(fs.existsSync(input)) fs.unlinkSync(input)
-                    if(fs.existsSync(output)) fs.unlinkSync(output)
-                }
-            }
+/* ================= VIDEO → MP3 (FIX STABIL + ANTI ERROR) ================= */
+if(
+    (type === 'videoMessage' && msg.message.videoMessage.caption === '.mp3') ||
+    text === '.toaudio'
+){
+    try{
+        let videoMsg
 
+        // 🔥 kalau kirim langsung
+        if(type === 'videoMessage'){
+            videoMsg = msg.message.videoMessage
+        }
+        // 🔥 kalau reply video
+        else if(msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage){
+            videoMsg = msg.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage
+        }
+
+        if(!videoMsg){
+            return sock.sendMessage(from,{ text:"❌ Kirim / reply video dengan caption *.mp3*" })
+        }
+
+        const stream = await downloadContentFromMessage(videoMsg,"video")
+        const buffer = await bufferFromStream(stream)
+
+        const input = path.join(__dirname, `input_${Date.now()}.mp4`)
+        const output = path.join(__dirname, `output_${Date.now()}.mp3`)
+
+        fs.writeFileSync(input, buffer)
+
+        // 🔥 convert lebih stabil
+        await new Promise((resolve,reject)=>{
+            ffmpeg(input)
+            .noVideo()
+            .audioCodec("libmp3lame")
+            .audioBitrate(128)
+            .format("mp3")
+            .save(output)
+            .on("end", resolve)
+            .on("error", reject)
+        })
+
+        const audio = fs.readFileSync(output)
+
+        await sock.sendMessage(from,{
+            audio: audio,
+            mimetype: "audio/mpeg"
+        })
+
+        // 🔥 hapus file
+        if(fs.existsSync(input)) fs.unlinkSync(input)
+        if(fs.existsSync(output)) fs.unlinkSync(output)
+
+    }catch(err){
+        console.log("MP3 ERROR:", err)
+        return sock.sendMessage(from,{ text:"❌ Gagal convert ke MP3" })
+    }
+}
             /* ================= TIKTOK ================= */
             if(text.startsWith('.tiktok ')){
 const url = text.replace('.tiktok ','')
