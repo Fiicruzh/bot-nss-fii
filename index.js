@@ -316,7 +316,7 @@ LINK VARCITY : https://www.roblox.com/share?code=4e879bb8c0113d429e2b3381537c0e5
 
             if(text.startsWith(".interval")){
                 if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang bisa pakai command ini" })
-                if(!undanganGroups[from]) return sock.sendMessage(from,{ text:"⚠️ Gunakan .setundangan dulu" })
+                if(!undanganGroups[from]) return sock.sendMessage(from,{ text:"⚠️ Gunakan .setundangan dulu 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
                 const waktu = text.split(" ")[1]
                 let ms = {"1menit":60000,"2menit":120000,"3menit":180000,"4menit":240000,"5menit":300000,"6menit":360000,"7menit":420000,"8menit":480000,"9menit":540000,"10menit":600000,"30menit":1800000,"1jam":3600000,"2jam":7200000}[waktu]
                 if(!ms) return sock.sendMessage(from,{ text:"Gunakan:\n.interval 30menit\n.interval 1jam\n.interval 2jam" })
@@ -485,7 +485,7 @@ video:vid.data,
 caption:'✅ TikTok berhasil di download 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜'
 })
 }catch{
-await sock.sendMessage(from,{ text:'❌ Gagal download TikTok' })
+await sock.sendMessage(from,{ text:'❌ Gagal download TikTok 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜' })
 }
 }
 
