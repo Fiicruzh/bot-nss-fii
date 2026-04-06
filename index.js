@@ -15,6 +15,7 @@ import path from "path"
 import ffmpeg from "fluent-ffmpeg"
 import ffmpegPath from "ffmpeg-static"
 import sharp from "sharp"
+import { createCanvas } from "canvas"
 
 ffmpeg.setFfmpegPath(ffmpegPath)
 
@@ -491,8 +492,6 @@ if(text.startsWith('.tts ')){
 }
 
 /* ================= BRAT MAX FIT PERFECT ================= */
-import { createCanvas } from "canvas"
-
 if(text.startsWith(".brat ")){
     const input = text.replace(".brat ","")
 
