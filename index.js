@@ -20,7 +20,7 @@ const sharp = require("sharp")
 
 ffmpeg.setFfmpegPath(ffmpegPath)
 
-const PHONE_NUMBER = process.env.PHONE_NUMBER || "628979700981"
+const PHONE_NUMBER = process.env.PHONE_NUMBER || "6287886582175"
 const API_KEY = process.env.GROQ_API_KEY || "GANTI_API_KEY"
 
 if(!PHONE_NUMBER || !API_KEY){
@@ -242,9 +242,9 @@ Sudah bisa CN / Belum?
 ╎- 》.setundangan
 ╎- 》.stopundangan
 ╎- 》.antilink
-╎- 》.kick
-╎- 》.open
 ╎- 》.close
+╎- 》.open
+╎- 》.kick
 ╎┈「 MEMBER MENU 」
 ╎- 》.rules
 ╚┈┈┈┈┈┈┈┈┈┈┈┈
@@ -254,7 +254,6 @@ Sudah bisa CN / Belum?
 ╎- 》.reset → Reset Memory
 ╚┈┈┈┈┈┈┈┈┈┈┈┈
 ╔┈「 MENU-FII 」
-╎- 》.brat teks
 ╎- 》.stiker (gambar + caption)
 ╎- 》.tts teks
 ╎- 》.mp3 convert mp4 → mp3
@@ -265,24 +264,10 @@ Sudah bisa CN / Belum?
             }
 
             /* ================= ADMIN COMMAND ================= */
-            /* ================= CLOSE GROUP ================= */
-if(text === ".close"){
-    if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang dapat mengakses fitur ini 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
-    await sock.groupSettingUpdate(from,"announcement")
-    return sock.sendMessage(from,{ text:"🔒 Grup telah ditutup (hanya admin yang bisa kirim pesan)" })
-}
-
-/* ================= OPEN GROUP ================= */
-if(text === ".open"){
-    if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang dapat mengakses fitur ini 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
-    await sock.groupSettingUpdate(from,"not_announcement")
-    return sock.sendMessage(from,{ text:"🔓 Grup telah dibuka (semua member bisa kirim pesan)" })
-}
-
             if(text===".setwelcome"){
                 if(!isAdmin) return sock.sendMessage(from,{ text:"❌ Hanya admin yang bisa pakai command ini" })
                 welcomeGroups.add(from)
-                return sock.sendMessage(from,{ text:"✅ Welcome diaktifkan 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
+                return sock.sendMessage(from,{ text:"✅ Welcome diaktifkan" })
             }
 
             if(text===".rules"){
@@ -333,7 +318,7 @@ LINK VARCITY : https://www.roblox.com/share?code=4e879bb8c0113d429e2b3381537c0e5
                 const pesan = text.replace(".setundangan","").trim()
                 if(!pesan) return sock.sendMessage(from,{ text:"Contoh:\n.setundangan Ayo join clan NIGHTFALL" })
                 undanganGroups[from]={ text:pesan, timer:null }
-                return sock.sendMessage(from,{ text:"✅ Pesan undangan disimpan\nGunakan .interval untuk memulai 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
+                return sock.sendMessage(from,{ text:"✅ Pesan undangan disimpan\nGunakan .interval untuk memulai" })
             }
 
             if(text.startsWith(".interval")){
@@ -354,7 +339,7 @@ LINK VARCITY : https://www.roblox.com/share?code=4e879bb8c0113d429e2b3381537c0e5
                 if(!undanganGroups[from]) return sock.sendMessage(from,{ text:"⚠️ Undangan belum aktif" })
                 clearInterval(undanganGroups[from].timer)
                 delete undanganGroups[from]
-                return sock.sendMessage(from,{ text:"🛑 Undangan otomatis dihentikan 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜" })
+                return sock.sendMessage(from,{ text:"🛑 Undangan otomatis dihentikan" })
             }
 
             /* ================= AI ================= */
@@ -370,128 +355,72 @@ LINK VARCITY : https://www.roblox.com/share?code=4e879bb8c0113d429e2b3381537c0e5
                 return sock.sendMessage(from,{ text:reply })
             }
 
-            /* ================= STICKER (FIX NO GEPENG + AUTO CROP) ================= */
-if(type === 'imageMessage' && msg.message.imageMessage.caption === '.stiker'){
-    const buffer = await getBuffer(msg.message.imageMessage,'image')
+            /* ================= STICKER ================= */
+            if(type === 'imageMessage' && msg.message.imageMessage.caption === '.stiker'){
+const buffer = await getBuffer(msg.message.imageMessage,'image')
 
-    try{
-        const webp = await sharp(buffer)
-            .resize(512,512,{
-                fit:"cover", // 🔥 crop otomatis
-                position:"centre"
-            })
-            .webp()
-            .toBuffer()
+const input='./stiker.jpg'
+const output='./stiker.webp'
 
-        return sock.sendMessage(from,{ sticker: webp })
+fs.writeFileSync(input, buffer)
 
-    }catch(err){
-        console.log(err)
-        return sock.sendMessage(from,{ text:"❌ Gagal membuat stiker" })
-    }
+await new Promise((resolve,reject)=>{
+ffmpeg(input)
+.outputOptions([
+'-vcodec libwebp',
+'-vf scale=512:512:force_original_aspect_ratio=decrease,fps=15'
+])
+.toFormat('webp')
+.on('end',resolve)
+.on('error',reject)
+.save(output)
+})
+
+const sticker = fs.readFileSync(output)
+await sock.sendMessage(from,{ sticker })
+
+fs.unlinkSync(input)
+fs.unlinkSync(output)
 }
 
-
-// versi sharp (tetap ada tapi sudah di upgrade)
+// versi sharp (script new)
 if(msg.message.imageMessage && text === ".stiker"){
-    const stream = await downloadContentFromMessage(msg.message.imageMessage,"image")
-    const buffer = await bufferFromStream(stream)
+const stream = await downloadContentFromMessage(msg.message.imageMessage,"image")
+const buffer = await bufferFromStream(stream)
 
-    try{
-        const webp = await sharp(buffer)
-            .resize(512,512,{
-                fit:"cover",
-                position:"centre"
-            })
-            .webp()
-            .toBuffer()
+const webp = await toWebp(buffer)
 
-        return sock.sendMessage(from,{ sticker:webp })
-
-    }catch{
-        return sock.sendMessage(from,{ text:"❌ Gagal sticker" })
-    }
+if(!webp){
+return sock.sendMessage(from,{ text:"❌ Gagal sticker" })
 }
 
-           /* ================= TTS FIX FINAL (WA COMPATIBLE) ================= */
-if(text.startsWith('.tts ')){
-    const query = text.replace('.tts ','').trim()
-    if(!query) return sock.sendMessage(from,{ text:"❌ Masukkan teks" })
-
-    const input = "./tts.mp3"
-    const output = "./tts.ogg"
-
-    try{
-        // 🔥 ambil suara dari API
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=id&client=tw-ob&q=${encodeURIComponent(query)}`
-
-        const res = await axios.get(url,{
-            responseType:'arraybuffer',
-            headers:{
-                'User-Agent':'Mozilla/5.0'
-            }
-        })
-
-        fs.writeFileSync(input, res.data)
-
-        // 🔥 convert ke OGG OPUS (WA format)
-        await new Promise((resolve,reject)=>{
-            ffmpeg(input)
-            .audioCodec("libopus")
-            .format("ogg")
-            .save(output)
-            .on("end",resolve)
-            .on("error",reject)
-        })
-
-        const audio = fs.readFileSync(output)
-
-        await sock.sendMessage(from,{
-            audio: audio,
-            mimetype: 'audio/ogg; codecs=opus',
-            ptt: true
-        })
-
-    }catch(err){
-        console.log("TTS ERROR:", err)
-
-        try{
-            // 🔥 fallback streamelements
-            const audio = await textToVoice(query)
-
-            if(audio){
-                fs.writeFileSync(input, audio)
-
-                await new Promise((resolve,reject)=>{
-                    ffmpeg(input)
-                    .audioCodec("libopus")
-                    .format("ogg")
-                    .save(output)
-                    .on("end",resolve)
-                    .on("error",reject)
-                })
-
-                const fix = fs.readFileSync(output)
-
-                await sock.sendMessage(from,{
-                    audio: fix,
-                    mimetype:'audio/ogg; codecs=opus',
-                    ptt:true
-                })
-            }else{
-                throw "fallback gagal"
-            }
-
-        }catch{
-            return sock.sendMessage(from,{ text:"❌ TTS gagal total" })
-        }
-
-    }finally{
-        if(fs.existsSync(input)) fs.unlinkSync(input)
-        if(fs.existsSync(output)) fs.unlinkSync(output)
-    }
+return sock.sendMessage(from,{ sticker:webp })
 }
-            
+
+            /* ================= TTS ================= */
+            if(text.startsWith('.tts ')){
+const query = text.replace('.tts ','')
+try{
+const url=`https://translate.google.com/translate_tts?ie=UTF-8&tl=id&client=tw-ob&q=${encodeURIComponent(query)}`
+const res=await axios.get(url,{
+responseType:'arraybuffer',
+headers:{'User-Agent':'Mozilla/5.0'}
+})
+await sock.sendMessage(from,{
+audio:res.data,
+mimetype:'audio/mp4',
+ptt:true
+})
+}catch{
+const audio = await textToVoice(query)
+if(audio){
+await sock.sendMessage(from,{ audio, mimetype:"audio/mp4" })
+}else{
+await sock.sendMessage(from,{ text:"❌ TTS gagal" })
+}
+}
+}
+
             /* ================= VIDEO → MP3 ================= */
             if((type==='videoMessage' && msg.message.videoMessage.caption==='.mp3') || text==='.toaudio'){
                 const stream = await downloadContentFromMessage(msg.message.videoMessage,"video")
@@ -523,7 +452,7 @@ const vid = await axios.get(video,{ responseType:'arraybuffer' })
 
 await sock.sendMessage(from,{
 video:vid.data,
-caption:'✅ TikTok berhasil di download 𝗕̢͎ͨ̄𝘆̧̘͖̐𝗙̲͍̄̉͡𝗶͕̚͝𝗶͖̍͒͜'
+caption:'✅ TikTok berhasil'
 })
 }catch{
 await sock.sendMessage(from,{ text:'❌ Gagal download TikTok' })
