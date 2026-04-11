@@ -276,7 +276,8 @@ if(text === ".open"){
             if(text===".rules"){
                 return sock.sendMessage(from,{
                     text:`📜 *[ RULES NIGHTFALL SILENT SLAUGHTER ]*
-*1. WAJIB 17+*
+                    
+*1. WAJIB 18+*
 *2. DILARANG DRAMA SESAMA MEMBER*
 *3. DILARANG MEMBUAT KERIBUTAN DALAM STATUS MENYANDANG NAMA CLAN, MAKA AKAN DIKENAKAN SANKSI*
 *4. DILARANG MENJELEKKAN SESAMA MEMBER DAN ORG LAIN*
@@ -290,7 +291,6 @@ if(text === ".open"){
 *12. ⁠DILARANG KERAS UNTUK MENANYAKAN YANG MENYANGKUT HAL PRIBADI KE MEMBER LAINNYA*
 *13. JAGA SOPAN SANTUN SESAMA MEMBER ATAU PUN STAFF*
 *14. YANG SUDAH OUT TIDA BISA JOIN LAGI DENGAN ALASAN APAPUN ITU*
-LINK DISCORD : https://discord.gg/JuAq2NBf6
 LINK VARCITY : https://www.roblox.com/share?code=4e879bb8c0113d429e2b3381537c0e5f&type=AvatarItemDetails`
                 })
             }
