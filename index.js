@@ -416,7 +416,7 @@ Sudah bisa CN / Belum?
                 react("🕒")
                 react("📋")
                 return sock.sendMessage(from, {
-                    image: { url: "https://i.ibb.co.com/sJgL5vwR/static.png" },
+                    image: { url: "https://i.ibb.co.com/9kPHK2pJ/IMG-20260331-WA0079.jpg" },
                     caption: `
 ☆「 NSSxFii MENU 」
 
